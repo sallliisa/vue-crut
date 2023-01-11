@@ -10,14 +10,17 @@ import IconPlus from "@/components/icons/IconPlus.vue";
 import Table from "@/components/Table.vue";
 import {ref} from "vue";
 import Dropdown from "@/components/Dropdown.vue";
-import IconRadio from "@/components/icons/IconRadio.vue";
 import RadioSelection from "@/components/RadioSelection.vue";
+import Button from "@/components/Button.vue";
+import PageNavigation from "@/components/composite/PageNavigation.vue"
 
 const query = ref('')
 const activeradio = ref(0)
 const activedropdown = ref(0)
 const data = {columns: ['GAMER', 'GAMING', 'NAME'], data: [{gamer: 'gamer', gaming: 'gaming', name: 'mr gamer'}, {gamer: 'mister gamer', gaming: 'yes', name: 'tuan gamer'}]}
 const showFilter = ref(false)
+const tablePage = ref(1)
+const tableViewSize = ref(10)
 
 function searchData(data: Array<Object>, key: string, field: string) {
     return data.filter((data: any) => data[field].toLowerCase().includes(key.toLowerCase()));
@@ -40,20 +43,26 @@ function searchData(data: Array<Object>, key: string, field: string) {
           </Group>
         </Group>
       </Card>
-      <Card v-if="showFilter" class="justify-start">
+
+      <Card v-if="showFilter" class="items-start">
         <Group class="gap-12">
           <Stack>
-            <div class="text-sm text-c-faded">Kategori</div>
+            <div class="text-sm text-c-faded w-[250px]">Kategori</div>
             <Dropdown :items="['SEMUA', 'gamer', 'mr gamer']" @active-item-change="activedropdown = $event"></Dropdown>
           </Stack>
           <Stack>
-            <div class="text-sm text-c-faded">Kategori</div>
+            <div class="text-sm text-c-faded">Status</div>
             <Group class="gap-8">
-              <RadioSelection :items="['SEMUA', 'gamer', 'mr gamer']" @active-item-change="activeradio = $event"/>
+              <RadioSelection :items="['Aktif', 'Non-aktif']" @active-item-change="activeradio = $event"/>
             </Group>
           </Stack>
         </Group>
+        <Group>
+          <Button>Apply</Button>
+          <Button>Reset</Button>
+        </Group>
       </Card>
+
       <Card>
         <Table :columns="data.columns" :data="searchData(data.data, query, 'gamer')">
           <template #item="item">
@@ -62,6 +71,7 @@ function searchData(data: Array<Object>, key: string, field: string) {
             <td>{{ item.name }}</td>
           </template>
         </Table>
+        <PageNavigation :data-length="data.data.length" @current-page-change="tablePage = $event" @view-size-dropdown-active-change="tableViewSize = $event"/>
       </Card>
     </Stack>
   </main>
