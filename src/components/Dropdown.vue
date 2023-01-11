@@ -4,10 +4,32 @@ import { vOnClickOutside } from '@vueuse/components'
 import type { OnClickOutsideHandler } from '@vueuse/core'
 import { ref } from 'vue'
 
+const props = defineProps({
+    items: {
+        type: Array,
+        required: true
+    },
+    value: {
+        type: Number,
+        required: false,
+        default: 0
+    }
+})
+
+const emit = defineEmits(['activeItemChange'])
+
+const menuToggle = ref(false)
+const activeItem = ref(props.value)
 const dropdown = ref(false)
+
 const dropdownHandler: OnClickOutsideHandler = (event) => {
   console.log(event)
   dropdown.value = false
+}
+
+const setActiveItem = (itemIdx: number) => {
+    activeItem.value = itemIdx;
+    emit("activeItemChange", itemIdx);
 }
 </script>
 
@@ -33,25 +55,6 @@ const dropdownHandler: OnClickOutsideHandler = (event) => {
 <script lang="ts">
 export default {
     name: "Dropdown",
-    props: {
-        items: {
-            type: Array,
-            required: true
-        },
-    },
-    data() {
-        return {
-            menuToggle: false,
-            activeItem: 0
-        };
-    },
-    methods: {
-        setActiveItem(itemIdx: number) {
-            this.activeItem = itemIdx;
-            this.$emit("activeItemChange", this.activeItem);
-        }
-    },
-    emits: ["activeItemChange"],
     components: { IconChevronDown }
 }
 </script>

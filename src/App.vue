@@ -15,9 +15,11 @@ import TitleBar from "@/components/TitleBar.vue"
   </head>
   <div class="flex flex-row w-full">
     <Navbar/>
-    <div class="flex flex-col w-full px-32 py-8 gap-8">
-      <TitleBar/>
-      <RouterView/>
+    <div class="flex w-full justify-center">
+      <div class="flex flex-col w-[768px] py-8 gap-8">
+        <TitleBar/>
+        <RouterView/>
+      </div>
     </div>
   </div>
 </template>

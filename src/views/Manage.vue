@@ -14,45 +14,98 @@ import RadioSelection from "@/components/RadioSelection.vue";
 import Button from "@/components/Button.vue";
 import PageNavigation from "@/components/composite/PageNavigation.vue"
 import axios from 'axios'
+import NumberInput from "@/components/NumberInput.vue";
+import IconX from "@/components/icons/IconX.vue";
+import ButtonSelection from "@/components/ButtonSelection.vue";
+import IconTrash from "@/components/icons/IconTrash.vue";
+import IconEdit from "@/components/icons/IconEdit.vue";
+import IconLoading from "@/components/icons/IconLoading.vue";
 
 const query = ref('')
-const activeradio = ref(0)
-const activedropdown = ref(0)
-const showFilter = ref(false)
-const showInputForm = ref(false)
+const activeStockFilter = ref(0)
 const tablePage = ref(1)
 const tableViewSize = ref(10)
-const inputName = ref('')
-const inputCode = ref('')
-const productData = reactive({
-    columns: ['PRODUCT CODE', 'PRODUCT NAME', 'UNIT PRICE', 'STOCK'],
-    data: []
+const loading = ref(true)
+
+const cardState = reactive({
+  filter: false,
+  input: false,
+  edit: false
 })
 
-const uom = reactive({
+const data = reactive({
+  productData: {
+    columns: ['PRODUCT CODE', 'PRODUCT NAME', 'UNIT PRICE', 'STOCK', 'ACTIONS'],
     data: []
-})
-
-const product = reactive({
+  },
+  uom: [],
+  product: {
     code: '',
     name: '',
     description: '',
     unit_price: 0,
     stock: 0,
     uom_id: 1,
+  },
+  editedProduct: {
+    product_code: '',
+    product_name: '',
+    description: '',
+    unit_price: 0,
+    stock: 0,
+    uom_id: 1,
+  }
 })
 
 function searchData(data: Array<Object>, key: string, field: string) {
-    return data.filter((data: any) => data[field].toLowerCase().includes(key.toLowerCase()));
+  return data.filter((data: any) => data[field].toLowerCase().includes(key.toLowerCase()));
 }
 
-const searchedData: any = computed(() => {
-    return searchData(productData.data, query.value, 'product_name')
+function filterData(data: Array<Object>) {
+  if (activeStockFilter.value === 0) return data
+  else if (activeStockFilter.value === 1) return data.filter((data: any) => data.stock < 5)
+  else return data.filter((data: any) => data.stock === 0)
+}
+
+const computedData: any = computed(() => {
+  return searchData(filterData(data.productData.data), query.value, 'product_name')
 })
 
+function toggleEditCard() {
+  if (cardState.edit) {
+    cardState.edit = false
+    data.editedProduct = {
+      product_code: '',
+      product_name: '',
+      description: '',
+      unit_price: 0,
+      stock: 0,
+      uom_id: 1,
+    }
+  }
+  else cardState.edit = true
+  
+}
+
+function toggleInputCard() {
+  if (cardState.input) {
+    cardState.input = false
+    data.product = {
+      code: '',
+      name: '',
+      description: '',
+      unit_price: 0,
+      stock: 0,
+      uom_id: 1,
+    }
+  } else cardState.input = true
+}
+
 const fetchProducts = () => {
+  loading.value = true
   axios.get('https://pos.zzidzz.tech/products').then(function (response) {
-    productData.data = response.data.data
+    data.productData.data = response.data.data
+    loading.value = false
   }).catch(function (error) {
     console.log(error)
   });
@@ -61,7 +114,7 @@ const fetchProducts = () => {
 const fetchUOMs = () => {
   axios.get('https://pos.zzidzz.tech/uoms').then(function (response) {
     response.data.data.map((item: any) => {
-      (uom as any).data.push(item.uom_name)
+      (data.uom as any).push(item.uom_name)
     })
   }).catch(function (error) {
     console.log(error)
@@ -69,19 +122,50 @@ const fetchUOMs = () => {
 }
 
 const submitData = () => {
-  const data = {
-    product_code: product.code,
-    product_name: product.name,
-    uom_id: product.uom_id,
+  loading.value = true
+  const payload = {
+    product_code: data.product.code,
+    product_name: data.product.name,
+    uom_id: data.product.uom_id,
     thumbnail: "",
-    description: product.description,
-    unit_price: product.unit_price,
-    stock: product.stock
+    description: data.product.description,
+    unit_price: data.product.unit_price,
+    stock: data.product.stock
   }
-  axios.post('https://pos.zzidzz.tech/products/create', data).then(function (response) {
+  axios.post('https://pos.zzidzz.tech/products/create', payload).then(function (response) {
     fetchProducts()
-    showInputForm.value = false
+    toggleInputCard()
+    loading.value = false
+  }).catch(function (error) {
+    console.log(error)
+  });
+}
+
+const removeData = (id: number) => {
+  const payload = {
+    id: id
+  }
+  axios.delete('https://pos.zzidzz.tech/products/delete', {data: payload}).then(function (response) {
     console.log(response)
+    fetchProducts()
+  }).catch(function (error) {
+    console.log(error)
+  });
+}
+
+const fetchEditProduct = async (id: number) => {
+  cardState.edit = !cardState.edit
+  axios.get(`https://pos.zzidzz.tech/products/${id}/show`).then(function (response) {
+    data.editedProduct = response.data.data
+  })
+}
+
+const editProduct = () => {
+  loading.value = true
+  axios.put('https://pos.zzidzz.tech/products/update', data.editedProduct).then(function (response) {
+    fetchProducts()
+    toggleEditCard()
+    loading.value = false
   }).catch(function (error) {
     console.log(error)
   });
@@ -99,55 +183,90 @@ fetchUOMs()
         <Group class="justify-between">
           <Group>
             <Input placeholder="Cari" @update-value="query = $event"><IconSearch class="fill-white"/></Input>
-            <ButtonIcon :active="showFilter" @click="showFilter = !showFilter"><IconFilter class="fill-white"/></ButtonIcon>
+            <ButtonIcon :active="cardState.filter" @click="cardState.filter = !cardState.filter"><IconFilter class="fill-white"/></ButtonIcon>
           </Group>
           <Group>
-            <ButtonIcon :active="showInputForm" @click="showInputForm = !showInputForm"><IconPlus class="fill-white"/></ButtonIcon>
+            <ButtonIcon :active="cardState.input" @click="cardState.input = !cardState.input"><IconPlus class="fill-white"/></ButtonIcon>
           </Group>
         </Group>
       </Card>
 
-      <Card v-if="showInputForm">
+      <Card v-if="cardState.input">
+        <template #header>
+          <div class="flex flex-row justify-between">
+            <h1 class="font-bold text-xl">Tambah Produk</h1>
+            <button><IconX class="fill-white" @click="toggleInputCard()"/></button>
+          </div>
+        </template>
         <Group>
-          <Input class="w-[168px]" @update-value="product.code = $event" placeholder="Product Code"></Input>
-          <Input @update-value="product.name = $event" placeholder="Product Name"></Input>
+          <Input @update-value="data.product.code = $event" placeholder="Product Code"></Input>
+          <Input @update-value="data.product.name = $event" placeholder="Product Name"></Input>
+          <NumberInput @update-value="data.product.stock = $event" placeholder="Stock"></NumberInput>
+          <Dropdown :items="data.uom" @active-item-change="data.product.uom_id = $event + 1"></Dropdown>
         </Group>
-        <Input @update-value="product.description = $event" placeholder="Product Description"></Input>
-        <Input @update-value="product.unit_price = $event" placeholder="Unit Price"></Input>
-        <Group>
-          <Input @update-value="product.stock = $event" placeholder="Stock"></Input>
-          <Dropdown :items="uom.data" @active-item-change="product.uom_id = $event + 1"></Dropdown>
-        </Group>
-        <Button @click="submitData()">Submit</Button>
+        <Input @update-value="data.product.description = $event" placeholder="Product Description"></Input>
+        <NumberInput @update-value="data.product.unit_price = $event" placeholder="Unit Price">Rp</NumberInput>
+        <Button :disabled="data.product.code == '' || data.product.name == ''" @click="submitData()">
+          <IconLoading v-if="loading"/>
+          <div v-else>Submit</div>
+        </Button>
       </Card>
 
-      <Card v-if="showFilter" class="items-start">
-        <Group class="gap-12">
-          <Stack>
-            <div class="text-sm text-c-faded w-[250px]">Kategori</div>
-            <Dropdown :items="['SEMUA', 'gamer', 'mr gamer']" @active-item-change="activedropdown = $event"></Dropdown>
-          </Stack>
-          <Stack>
-            <div class="text-sm text-c-faded">Status</div>
-            <Group class="gap-8">
-              <RadioSelection :items="['Aktif', 'Non-aktif']" @active-item-change="activeradio = $event"/>
+      <Card v-if="cardState.filter">
+        <template #header>
+          <div class="flex flex-row justify-between">
+            <h1 class="font-bold text-xl">Filter</h1>
+            <button><IconX class="fill-white" @click="cardState.filter = !cardState.filter"/></button>
+          </div>
+        </template>
+        <Group class="gap-4">
+          <div class="flex flex-col gap-4">
+            <div class="text-sm text-c-faded">Kategori</div>
+            <Group>
+              <ButtonSelection :items="['ELEKTRONIK', 'GADGET', 'PROPERTI']"/>
             </Group>
-          </Stack>
+          </div>
+          <div class="flex flex-col gap-4">
+            <div class="text-sm text-c-faded">Jumlah Stok</div>
+            <RadioSelection :items="['Tidak ada', 'Hampir Habis', 'Habis']" @active-item-change="activeStockFilter = $event"/>
+          </div>
         </Group>
-        <Group>
-          <Button>Apply</Button>
-          <Button>Reset</Button>
-        </Group>
+      </Card>
+
+      <Card v-if="cardState.edit">
+        <template #header>
+          <div class="flex flex-row justify-between">
+            <div class="flex">
+              <h1 class="font-bold text-xl">Edit Produk</h1>
+              <IconLoading class="w-8 h-8" v-if="data.editedProduct.product_code == ''"/>
+            </div>
+            <button><IconX class="fill-white" @click="toggleEditCard()"/></button>
+          </div>
+        </template>
+        <Stack v-if="data.editedProduct.product_code != ''">
+          <Group>
+            <Input :value="data.editedProduct.product_code" @update-value="data.editedProduct.product_code = $event" placeholder="Product Code"></Input>
+            <Input :value="data.editedProduct.product_name" @update-value="data.editedProduct.product_name = $event" placeholder="Product Name"></Input>
+            <NumberInput :value="(data.editedProduct.stock as any)" @update-value="data.editedProduct.stock = $event" placeholder="Stock"></NumberInput>
+            <Dropdown :value="data.editedProduct.uom_id-1" :items="data.uom" @active-item-change="data.editedProduct.uom_id = $event + 1"></Dropdown>
+          </Group>
+          <Input :value="data.editedProduct.description" @update-value="data.editedProduct.description = $event" placeholder="Product Description"></Input>
+          <NumberInput :value="(data.editedProduct.unit_price as any)" @update-value="data.editedProduct.unit_price = $event" placeholder="Unit Price">Rp</NumberInput>
+          <Button :disabled="data.editedProduct.product_code == '' || data.editedProduct.product_name == ''" @click="editProduct()">
+            <IconLoading v-if="loading"/>
+            <div v-else>Submit</div>
+          </Button>
+        </Stack>
       </Card>
 
       <Card class="gap-8">
-        <Table v-if="searchedData.length > 0" :columns="productData.columns" :data="searchedData">
+        <Table v-if="computedData.length > 0" :columns="data.productData.columns" :data="computedData">
           <template #item="item">
-            <td class="py-1 w-36">{{ item.product_code }}</td>
+            <td class="py-4 w-36">{{ item.product_code }}</td>
             <td>
               <Stack class="gap-0">
                 <div>{{ item.product_name }}</div>
-                <div class="text-xs text-c-outline">{{ item.description }}</div>
+                <div class="text-xs text-c-outline">{{ item.description.length > 20 ? item.description.substring(0, 20) + "…" : item.description }}</div>
               </Stack>
             </td>
             <td class="w-36">Rp{{ item.unit_price.toLocaleString('en-US') }}</td>
@@ -155,11 +274,19 @@ fetchUOMs()
               <Group class="gap-1 items-end">
                 <div>{{ item.stock }}</div>
                 <div class="text-xs">{{ item.uom_name }}</div>
-              </Group></td>
+              </Group>
+            </td>
+            <td>
+              <Group class="gap-2">
+                <ButtonIcon @click="removeData(item.id)"><IconTrash class="fill-white"/></ButtonIcon>
+                <ButtonIcon @click="cardState.edit ? toggleEditCard() : fetchEditProduct(item.id)"><IconEdit class="fill-white"/></ButtonIcon>
+              </Group>
+            </td>
           </template>
         </Table>
-        <div v-else>Data tidak ditemukan</div>
-        <PageNavigation :data-length="searchedData.length" @current-page-change="tablePage = $event" @view-size-dropdown-active-change="tableViewSize = $event"/>
+        <div v-else-if="!loading">Data tidak ditemukan</div>
+        <div v-else><IconLoading/></div>
+        <PageNavigation :data-length="computedData.length" @current-page-change="tablePage = $event" @view-size-dropdown-active-change="tableViewSize = $event"/>
       </Card>
     </Stack>
   </main>

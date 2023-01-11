@@ -6,9 +6,7 @@ import router from '@/router';
 import Card from '@/components/Card.vue';
 import Button from '@/components/Button.vue';
 import {useUserStore} from '@/stores/user';
-import {useCookies} from 'vue3-cookies';
 
-const {cookies} = useCookies()
 const username = ref('')
 const password = ref('')
 let res = ref('')
@@ -31,9 +29,6 @@ function login() {
     <main>
         <Card>
             <div class="flex flex-col gap-4">
-                <div>res: {{ res }}</div>
-                <div>username: {{ username }}</div>
-                <div>password: {{ password }}</div>
             <Input
                 label="Email"
                 placeholder="Enter your email"
