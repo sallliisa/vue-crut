@@ -2,6 +2,7 @@
 import Navbar from "@/components/Navbar.vue"
 import TitleBar from "@/components/TitleBar.vue"
 import { useNavbarStore } from "./stores/navbar";
+import {useScreenStore} from "@/stores/screen"
 </script>
 
 <template>
@@ -14,12 +15,12 @@ import { useNavbarStore } from "./stores/navbar";
       rel='stylesheet'
     />
   </head>
-  <div class="fixed">
-    <Navbar :class="useNavbarStore().state ? 'animate__slideOutLeft' : 'fixed animate__slideInLeft'" class="animate__animated animate__faster"/>
+  <div class="fixed" :class="useNavbarStore().state ? 'pointer-events-none' : ''">
+    <Navbar :class="useNavbarStore().state ? 'animate__slideOutLeft pointer-events-none' : 'fixed animate__slideInLeft'" class="animate__animated animate__faster"/>
   </div>
-  <div class="flex flex-row w-full">
-    <div class="flex w-full justify-center">
-      <div class="flex flex-col max-w-[768px] px-8 py-8 gap-8">
+  <div class="flex flex-row min-w-0 w-full">
+    <div class="flex min-w-0 w-full justify-center">
+      <div class="flex flex-col min-w-0 max-w-[768px] px-8 py-8 gap-8">
         <TitleBar/>
         <RouterView/>
       </div>
@@ -27,3 +28,47 @@ import { useNavbarStore } from "./stores/navbar";
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  data() {
+    return {
+      navbarControl: false,
+      windowWidth: 0,
+      windowHeight: 0,
+    }
+  },
+  created() {
+    window.addEventListener('resize', this.handleResize)
+    this.handleResize()
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize)
+  },
+  methods: {
+    handleResize() {
+      this.windowWidth = window.innerWidth
+      this.windowHeight = window.innerHeight
+      switch (true) {
+        case this.windowWidth < 640:
+          useScreenStore().set(0)
+          break
+        case this.windowWidth < 768:
+          useScreenStore().set(1)
+          break
+        case this.windowWidth < 1024:
+          useScreenStore().set(2)
+          break
+        case this.windowWidth < 1280:
+          useScreenStore().set(3)
+          break
+        case this.windowWidth < 1536:
+          useScreenStore().set(4)
+          break
+        default:
+          useScreenStore().set(5)
+          break
+      }
+    },
+  },
+}
+</script>

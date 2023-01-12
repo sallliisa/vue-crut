@@ -9,6 +9,7 @@ import VueCookies from 'vue-cookies'
 import "./assets/main.css";
 import 'animate.css'
 
+axios.defaults.baseURL = "https://pos.zzidzz.tech";
 axios.defaults.withCredentials = true;
 
 const app = createApp(App);
