@@ -26,11 +26,13 @@ const activeStockFilter = ref(0)
 const tablePage = ref(1)
 const tableViewSize = ref(10)
 const loading = ref(true)
+const errorMessage = ref('')
 
 const cardState = reactive({
   filter: false,
   input: false,
-  edit: false
+  edit: false,
+  delete: false
 })
 
 const data = reactive({
@@ -48,6 +50,15 @@ const data = reactive({
     uom_id: 1,
   },
   editedProduct: {
+    product_code: '',
+    product_name: '',
+    description: '',
+    unit_price: 0,
+    stock: 0,
+    uom_id: 1,
+  },
+  deletedProduct: {
+    id: 0,
     product_code: '',
     product_name: '',
     description: '',
@@ -104,20 +115,24 @@ function toggleInputCard() {
 const fetchProducts = () => {
   loading.value = true
   axios.get('https://pos.zzidzz.tech/products').then(function (response) {
+    errorMessage.value = ''
     data.productData.data = response.data.data
     loading.value = false
   }).catch(function (error) {
-    console.log(error)
+    loading.value = false
+    errorMessage.value = error.response.data.message
   });
 }
 
 const fetchUOMs = () => {
   axios.get('https://pos.zzidzz.tech/uoms').then(function (response) {
+    errorMessage.value = ''
     response.data.data.map((item: any) => {
       (data.uom as any).push(item.uom_name)
     })
   }).catch(function (error) {
-    console.log(error)
+    loading.value = false
+    errorMessage.value = error.response.data.message
   });
 }
 
@@ -133,23 +148,29 @@ const submitData = () => {
     stock: data.product.stock
   }
   axios.post('https://pos.zzidzz.tech/products/create', payload).then(function (response) {
+    errorMessage.value = ''
     fetchProducts()
     toggleInputCard()
     loading.value = false
   }).catch(function (error) {
-    console.log(error)
+    loading.value = false
+    errorMessage.value = error.response.data.message
   });
 }
 
 const removeData = (id: number) => {
+  loading.value = true
   const payload = {
     id: id
   }
   axios.delete('https://pos.zzidzz.tech/products/delete', {data: payload}).then(function (response) {
-    console.log(response)
+    errorMessage.value = ''
     fetchProducts()
+    loading.value = false
+    cardState.delete = false
   }).catch(function (error) {
-    console.log(error)
+    loading.value = false
+    errorMessage.value = error.response.data.message
   });
 }
 
@@ -163,12 +184,19 @@ const fetchEditProduct = async (id: number) => {
 const editProduct = () => {
   loading.value = true
   axios.put('https://pos.zzidzz.tech/products/update', data.editedProduct).then(function (response) {
+    errorMessage.value = ''
     fetchProducts()
     toggleEditCard()
     loading.value = false
   }).catch(function (error) {
-    console.log(error)
+    loading.value = false
+    errorMessage.value = error.response.data.message
   });
+}
+
+const deleteProduct = (item: any) => {
+  data.deletedProduct = item
+  cardState.delete = !cardState.delete
 }
 
 fetchProducts()
@@ -179,6 +207,7 @@ fetchUOMs()
 <template>
   <main>
     <Stack>
+      <div class="bg-red-500 rounded-lg px-8 py-4" v-if="errorMessage != ''">{{ errorMessage }}</div>
       <Card class="gap-4">
         <Group class="justify-between">
           <Group>
@@ -259,6 +288,22 @@ fetchUOMs()
         </Stack>
       </Card>
 
+      <Card v-if="cardState.delete">
+        <template #header>
+          <div class="flex flex-row justify-between">
+            <div class="flex">
+              <h1 class="font-bold text-xl">Hapus Produk</h1>
+            </div>
+            <button><IconX class="fill-white" @click="cardState.delete = !cardState.delete"/></button>
+          </div>
+        </template>
+        <h1>Yakin ingin menghapus produk {{ data.deletedProduct.product_name }} ({{ data.deletedProduct.product_code }})?</h1>
+        <Button @click="removeData(data.deletedProduct.id)">
+          <IconLoading v-if="loading"/>
+          <div v-else>Submit</div>
+        </Button>
+      </Card>
+
       <Card class="gap-8">
         <Table v-if="computedData.length > 0" :columns="data.productData.columns" :data="computedData">
           <template #item="item">
@@ -278,7 +323,7 @@ fetchUOMs()
             </td>
             <td>
               <Group class="gap-2">
-                <ButtonIcon @click="removeData(item.id)"><IconTrash class="fill-white"/></ButtonIcon>
+                <ButtonIcon @click="deleteProduct(item)"><IconTrash class="fill-white"/></ButtonIcon>
                 <ButtonIcon @click="cardState.edit ? toggleEditCard() : fetchEditProduct(item.id)"><IconEdit class="fill-white"/></ButtonIcon>
               </Group>
             </td>
