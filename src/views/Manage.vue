@@ -174,11 +174,9 @@ const removeData = (id: number) => {
   });
 }
 
-const fetchEditProduct = async (id: number) => {
+const populateEditProduct = async (item: any) => {
+  data.editedProduct = item
   cardState.edit = !cardState.edit
-  axios.get(`https://pos.zzidzz.tech/products/${id}/show`).then(function (response) {
-    data.editedProduct = response.data.data
-  })
 }
 
 const editProduct = () => {
@@ -307,15 +305,15 @@ fetchUOMs()
       <Card class="gap-8">
         <Table v-if="computedData.length > 0" :columns="data.productData.columns" :data="computedData">
           <template #item="item">
-            <td class="py-4 w-36">{{ item.product_code }}</td>
+            <td class="py-4 ">{{ item.product_code }}</td>
             <td>
               <Stack class="gap-0">
                 <div>{{ item.product_name }}</div>
                 <div class="text-xs text-c-outline">{{ item.description.length > 20 ? item.description.substring(0, 20) + "…" : item.description }}</div>
               </Stack>
             </td>
-            <td class="w-36">Rp{{ item.unit_price.toLocaleString('en-US') }}</td>
-            <td class="w-36">
+            <td class="">Rp{{ item.unit_price.toLocaleString('en-US') }}</td>
+            <td class="">
               <Group class="gap-1 items-end">
                 <div>{{ item.stock }}</div>
                 <div class="text-xs">{{ item.uom_name }}</div>
@@ -324,7 +322,7 @@ fetchUOMs()
             <td>
               <Group class="gap-2">
                 <ButtonIcon @click="deleteProduct(item)"><IconTrash class="fill-white"/></ButtonIcon>
-                <ButtonIcon @click="cardState.edit ? toggleEditCard() : fetchEditProduct(item.id)"><IconEdit class="fill-white"/></ButtonIcon>
+                <ButtonIcon @click="cardState.edit ? toggleEditCard() : populateEditProduct(item)"><IconEdit class="fill-white"/></ButtonIcon>
               </Group>
             </td>
           </template>

@@ -22,14 +22,18 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   if (to.name != 'Login') {
-    const response = await axios.get('https://pos.zzidzz.tech/products')
-    if (response.status === 200) {
-      console.log('Logged in')
-      next()
-    }
-    else {
-      console.log('bounced back')
-      useUserStore().deleteUser()
+    if (useUserStore().user.auth) {
+      const response = await axios.get('https://pos.zzidzz.tech/products')
+      if (response.status === 200) {
+        console.log('Logged in')
+        next()
+      }
+      else {
+        console.log('bounced back')
+        useUserStore().deleteUser()
+        next('/login')
+      }
+    } else {
       next('/login')
     }
   } else {

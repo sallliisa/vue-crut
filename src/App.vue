@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Navbar from "@/components/Navbar.vue"
 import TitleBar from "@/components/TitleBar.vue"
+import { useNavbarStore } from "./stores/navbar";
 </script>
 
 <template>
@@ -13,10 +14,12 @@ import TitleBar from "@/components/TitleBar.vue"
       rel='stylesheet'
     />
   </head>
+  <div class="fixed">
+    <Navbar :class="useNavbarStore().state ? 'animate__slideOutLeft' : 'fixed animate__slideInLeft'" class="animate__animated animate__faster"/>
+  </div>
   <div class="flex flex-row w-full">
-    <Navbar/>
     <div class="flex w-full justify-center">
-      <div class="flex flex-col w-[768px] py-8 gap-8">
+      <div class="flex flex-col max-w-[768px] px-8 py-8 gap-8">
         <TitleBar/>
         <RouterView/>
       </div>

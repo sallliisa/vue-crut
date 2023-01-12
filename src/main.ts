@@ -7,6 +7,7 @@ import axios from "axios"
 import VueCookies from 'vue-cookies'
 
 import "./assets/main.css";
+import 'animate.css'
 
 axios.defaults.withCredentials = true;
 

@@ -22,10 +22,10 @@ function login() {
     }
     axios.post('https://pos.zzidzz.tech/login', data).then(function (response) {
         if (response.data.message == "message.loginSuccess") {
-            useUserStore().setUser(response.data.user)
+            useUserStore().setUser({fullname: response.data.user.fullname, username: response.data.user.username, auth: true})
             errorMessage.value = ''
-            loading.value = false
             router.push('/')
+            loading.value = false
         }
     }).catch(function (error) {
         res.value = error
