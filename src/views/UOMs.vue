@@ -30,7 +30,8 @@ import IconChevronsLeft from "@/components/icons/IconChevronsLeft.vue";
 const query = ref('')
 const loading = ref(true)
 const errorMessage = ref('')
-
+const viewSizeDropdownOptions = [10, 20, 30, 40, 40]
+const viewSizeDropdownActive = ref(0)
 const cardState = reactive({
   filter: false,
   input: false,
@@ -100,8 +101,9 @@ function toggleInputCard() {
 }
 
 const fetchUOMs = () => {
+  console.log('fetching')
   loading.value = true
-  axios.get(`/uoms?page=${data.uomData.currentPage}`).then(function (response) {
+  axios.get(`/uoms?page=${data.uomData.currentPage}&limit=${viewSizeDropdownOptions[viewSizeDropdownActive.value]}&search=${query.value}`).then(function (response) {
     errorMessage.value = ''
     data.uomData.data = response.data.data.map(({id, uom_code, uom_name}: any) => ({id, uom_code, uom_name}))
     data.uomData.totalLength = response.data.total
@@ -178,10 +180,9 @@ fetchUOMs()
     <Stack>
       <Alert :sentiment="false" v-if="errorMessage != ''">{{ errorMessage }}</Alert>
       <Card class="gap-4">
-        {{ loading }}
         <Group v-if="useScreenStore().isAtLeast('md')" class="justify-between">
           <Group>
-            <Input placeholder="Cari" @update-value="query = $event"><IconSearch class="fill-white"/></Input>
+            <Input placeholder="Cari" @update-value="query = $event; fetchUOMs()"><IconSearch class="fill-white"/></Input>
           </Group>
           <Group>
             <ButtonIcon :active="cardState.input" @click="cardState.input = !cardState.input"><IconPlus class="fill-white"/></ButtonIcon>
@@ -189,7 +190,7 @@ fetchUOMs()
         </Group>
         <Stack v-else>
           <Group>
-            <Input placeholder="Cari" @update-value="query = $event"><IconSearch class="fill-white"/></Input>
+            <Input placeholder="Cari" @update-value="query = $event; fetchUOMs()"><IconSearch class="fill-white"/></Input>
           </Group>
           <Group class="justify-center">
             <ButtonIcon :active="cardState.filter" @click="cardState.filter = !cardState.filter"><IconFilter class="fill-white"/></ButtonIcon>
@@ -280,16 +281,16 @@ fetchUOMs()
             <div class="border border-c-outline/75  rounded-md py-2 px-4">
                 {{data.uomData.currentPage}}
             </div>
-            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == data.uomData.totalPages" @click="data.uomData.currentPage++; fetchUOMs()">
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == data.uomData.totalPages || data.uomData.data.length == 0" @click="data.uomData.currentPage++; fetchUOMs()">
                 <IconChevronRight/>
             </button>
-            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == data.uomData.totalPages"  @click="data.uomData.currentPage = data.uomData.totalPages; fetchUOMs()">
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == data.uomData.totalPages || data.uomData.data.length == 0"  @click="data.uomData.currentPage = data.uomData.totalPages; fetchUOMs()">
                 <IconChevronsRight/>
             </button>
           </div>
           <div class="flex flex-row gap-2 items-center justify-center">
-            <!-- <h1 class='text-rbs-grey'>Menampilkan {{ data.uomData > (viewSizeDropdownOptions[viewSizeDropdownActive] as number) ? viewSizeDropdownOptions[viewSizeDropdownActive] : dataLength }} dari {{ dataLength }} data</h1> -->
-            <!-- <Dropdown v-on:activeItemChange="viewSizeDropdownActiveChange($event)" :items=viewSizeDropdownOptions></Dropdown> -->
+            <h1 class='text-rbs-grey'>Menampilkan {{ data.uomData.totalLength > (viewSizeDropdownOptions[viewSizeDropdownActive] as number) ? data.uomData.data.length : data.uomData.totalLength }} dari {{ data.uomData.totalLength }} data</h1>
+            <Dropdown v-on:activeItemChange="viewSizeDropdownActive = $event; fetchUOMs()" :items=viewSizeDropdownOptions></Dropdown>
           </div>
         </div>
       </Card>

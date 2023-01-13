@@ -21,7 +21,11 @@ import IconTrash from "@/components/icons/IconTrash.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconLoading from "@/components/icons/IconLoading.vue";
 import { useScreenStore } from "@/stores/screen";
-import Alert from "@/components/Alert.vue"
+import Alert from "@/components/Alert.vue";
+import IconChevronRight from "@/components/icons/IconChevronRight.vue";
+import IconChevronLeft from "@/components/icons/IconChevronLeft.vue";
+import IconChevronsRight from "@/components/icons/IconChevronsRight.vue";
+import IconChevronsLeft from "@/components/icons/IconChevronsLeft.vue";
 
 const query = ref('')
 const activeStockFilter = ref(0)
@@ -29,6 +33,8 @@ const tablePage = ref(1)
 const tableViewSize = ref(10)
 const loading = ref(true)
 const errorMessage = ref('')
+const viewSizeDropdownOptions = [10, 20, 30, 40, 40]
+const viewSizeDropdownActive = ref(0)
 
 const cardState = reactive({
   filter: false,
@@ -40,12 +46,15 @@ const cardState = reactive({
 const data = reactive({
   productData: {
     columns: ['PRODUCT CODE', 'PRODUCT NAME', 'UNIT PRICE', 'STOCK', 'ACTIONS'],
-    data: []
+    data: [],
+    total: 0,
+    totalPages: 0,
+    currentPage: 1
   },
   uom: [],
   product: {
-    code: '',
-    name: '',
+    product_code: '',
+    product_name: '',
     description: '',
     unit_price: 0,
     stock: 0,
@@ -103,8 +112,8 @@ function toggleInputCard() {
   if (cardState.input) {
     cardState.input = false
     data.product = {
-      code: '',
-      name: '',
+      product_code: '',
+      product_name: '',
       description: '',
       unit_price: 0,
       stock: 0,
@@ -114,10 +123,14 @@ function toggleInputCard() {
 }
 
 const fetchProducts = () => {
+  console.log('fetching')
   loading.value = true
-  axios.get('/products').then(function (response) {
+  axios.get(`/products?page=${data.productData.currentPage}&limit=${viewSizeDropdownOptions[viewSizeDropdownActive.value]}&search=${query.value}`).then(function (response) {
     errorMessage.value = ''
     data.productData.data = response.data.data
+    data.productData.total = response.data.total
+    data.productData.totalPages = response.data.totalPage
+    data
     loading.value = false
   }).catch(function (error) {
     loading.value = false
@@ -126,7 +139,7 @@ const fetchProducts = () => {
 }
 
 const fetchUOMs = () => {
-  axios.get('/uoms').then(function (response) {
+  axios.get('/uoms?limit=100').then(function (response) {
     errorMessage.value = ''
     response.data.data.map((item: any) => {
       (data.uom as any).push({id: item.id, uom_code: item.uom_code, uom_name: item.uom_name})
@@ -140,8 +153,8 @@ const fetchUOMs = () => {
 const submitData = () => {
   loading.value = true
   const payload = {
-    product_code: data.product.code,
-    product_name: data.product.name,
+    product_code: data.product.product_code,
+    product_name: data.product.product_name,
     uom_id: data.product.uom_id,
     thumbnail: "",
     description: data.product.description,
@@ -210,7 +223,7 @@ fetchUOMs()
       <Card class="gap-4">
         <Group v-if="useScreenStore().isAtLeast('md')" class="justify-between">
           <Group>
-            <Input placeholder="Cari" @update-value="query = $event"><IconSearch class="fill-white"/></Input>
+            <Input placeholder="Cari" @update-value="query = $event; fetchProducts()"><IconSearch class="fill-white"/></Input>
             <ButtonIcon :active="cardState.filter" @click="cardState.filter = !cardState.filter"><IconFilter class="fill-white"/></ButtonIcon>
           </Group>
           <Group>
@@ -236,8 +249,8 @@ fetchUOMs()
           </div>
         </template>
         <div class="flex flex-col md:flex-row gap-4">
-          <Input @update-value="data.product.code = $event" placeholder="Product Code"></Input>
-          <Input @update-value="data.product.name = $event" placeholder="Product Name"></Input>
+          <Input @update-value="data.product.product_code = $event" placeholder="Product Code"></Input>
+          <Input @update-value="data.product.product_name = $event" placeholder="Product Name"></Input>
           <div class="flex flex-row gap-4">
             <NumberInput class="md:w-[156px]" @update-value="data.product.stock = $event" placeholder="Stock"></NumberInput>
             <Dropdown :items="data.uom.map((item) => (item as any).uom_name)" @active-item-change="data.product.uom_id = (data as any).uom[$event].id"></Dropdown>
@@ -245,7 +258,7 @@ fetchUOMs()
         </div>
         <Input @update-value="data.product.description = $event" placeholder="Product Description"></Input>
         <NumberInput @update-value="data.product.unit_price = $event" placeholder="Unit Price">Rp</NumberInput>
-        <Button :disabled="data.product.code == '' || data.product.name == ''" @click="submitData()">
+        <Button :disabled="data.product.product_code == '' || data.product.product_name == ''" @click="submitData()">
           <IconLoading v-if="loading"/>
           <div v-else>Submit</div>
         </Button>
@@ -317,7 +330,8 @@ fetchUOMs()
       </Card>
 
       <Card class="gap-8">
-        <Table v-if="computedData.length > 0" :paginated="true" :itemPerPage="tableViewSize" :currentPage="tablePage" :columns="data.productData.columns" :data="computedData">
+        <div v-if="loading"><IconLoading/></div>
+        <Table v-else-if="computedData.length > 0" :paginated="true" :itemPerPage="tableViewSize" :currentPage="tablePage" :columns="data.productData.columns" :data="computedData">
           <template #item="item">
             <td class="py-4 w-36">{{ item.product_code }}</td>
             <td>
@@ -342,9 +356,30 @@ fetchUOMs()
             </td>
           </template>
         </Table>
-        <div v-else-if="!loading">Data tidak ditemukan</div>
-        <div v-else><IconLoading/></div>
-        <PageNavigation :data-length="computedData.length" @current-page-change="tablePage = $event" @view-size-dropdown-active-change="tableViewSize = $event"/>
+        <div v-else>Data tidak ditemukan</div>
+        <div class="flex flex-col md:flex-row md:justify-between items-center gap-4">
+          <div class="flex flex-row gap-2">
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.productData.currentPage == 1" @click="data.productData.currentPage = 1; fetchUOMs()">
+                <IconChevronsLeft/>
+            </button>
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.productData.currentPage == 1" @click="data.productData.currentPage--; fetchUOMs()">
+                <IconChevronLeft/>
+            </button>
+            <div class="border border-c-outline/75  rounded-md py-2 px-4">
+                {{data.productData.currentPage}}
+            </div>
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.productData.currentPage == data.productData.totalPages || data.productData.data.length == 0" @click="data.productData.currentPage++; fetchUOMs()">
+                <IconChevronRight/>
+            </button>
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.productData.currentPage == data.productData.totalPages || data.productData.data.length == 0"  @click="data.productData.currentPage = data.productData.totalPages; fetchUOMs()">
+                <IconChevronsRight/>
+            </button>
+          </div>
+          <div class="flex flex-row gap-2 items-center justify-center">
+            <h1 class='text-rbs-grey'>Menampilkan {{ data.productData.total > (viewSizeDropdownOptions[viewSizeDropdownActive] as number) ? data.productData.data.length : data.productData.total }} dari {{ data.productData.total }} data</h1>
+            <Dropdown v-on:activeItemChange="viewSizeDropdownActive = $event; fetchProducts()" :items=viewSizeDropdownOptions></Dropdown>
+          </div>
+        </div>
       </Card>
     </Stack>
   </main>
