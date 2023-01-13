@@ -7,6 +7,7 @@ import Card from '@/components/Card.vue';
 import Button from '@/components/Button.vue';
 import {useUserStore} from '@/stores/user';
 import IconLoading from '@/components/icons/IconLoading.vue';
+import Alert from '@/components/Alert.vue'
 
 const username = ref('')
 const password = ref('')
@@ -22,9 +23,9 @@ function login() {
     }
     axios.post('https://pos.zzidzz.tech/login', data).then(function (response) {
         if (response.data.message == "message.loginSuccess") {
-            useUserStore().setUser({fullname: response.data.user.fullname, username: response.data.user.username, auth: true})
+            useUserStore().setUser({...response.data.user, auth: true})
             errorMessage.value = ''
-            router.push('/')
+            router.push('/products')
             loading.value = false
         }
     }).catch(function (error) {
@@ -39,7 +40,7 @@ function login() {
     <main>
         <Card>
             <div class="flex flex-col gap-4">
-            <div class="bg-red-500 rounded-lg px-8 py-4" v-if="errorMessage != ''">{{ errorMessage }}</div>
+                <Alert :sentiment="false" v-if="errorMessage != ''">{{ errorMessage }}</Alert>
             <Input
                 label="Username"
                 placeholder="Username"

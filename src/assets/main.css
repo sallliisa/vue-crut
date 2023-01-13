@@ -3,6 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  transition: all 0.1s;
+}
+
+:root {
+  --animate-duration: 50ms;
+}
+
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;

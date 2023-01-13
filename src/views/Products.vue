@@ -21,7 +21,7 @@ import IconTrash from "@/components/icons/IconTrash.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconLoading from "@/components/icons/IconLoading.vue";
 import { useScreenStore } from "@/stores/screen";
-import productServices from "@/services/productServices";
+import Alert from "@/components/Alert.vue"
 
 const query = ref('')
 const activeStockFilter = ref(0)
@@ -129,7 +129,7 @@ const fetchUOMs = () => {
   axios.get('/uoms').then(function (response) {
     errorMessage.value = ''
     response.data.data.map((item: any) => {
-      (data.uom as any).push(item.uom_name)
+      (data.uom as any).push({id: item.id, uom_code: item.uom_code, uom_name: item.uom_name})
     })
   }).catch(function (error) {
     loading.value = false
@@ -206,7 +206,7 @@ fetchUOMs()
 <template>
   <main>
     <Stack>
-      <div class="bg-red-500 rounded-lg px-8 py-4" v-if="errorMessage != ''">{{ errorMessage }}</div>
+      <Alert :sentiment="false" v-if="errorMessage != ''">{{ errorMessage }}</Alert>
       <Card class="gap-4">
         <Group v-if="useScreenStore().isAtLeast('md')" class="justify-between">
           <Group>
@@ -240,7 +240,7 @@ fetchUOMs()
           <Input @update-value="data.product.name = $event" placeholder="Product Name"></Input>
           <div class="flex flex-row gap-4">
             <NumberInput class="md:w-[156px]" @update-value="data.product.stock = $event" placeholder="Stock"></NumberInput>
-            <Dropdown :items="data.uom" @active-item-change="data.product.uom_id = $event + 1"></Dropdown>
+            <Dropdown :items="data.uom.map((item) => (item as any).uom_name)" @active-item-change="data.product.uom_id = (data as any).uom[$event].id"></Dropdown>
           </div>
         </div>
         <Input @update-value="data.product.description = $event" placeholder="Product Description"></Input>

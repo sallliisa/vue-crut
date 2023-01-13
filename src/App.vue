@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar.vue"
 import TitleBar from "@/components/TitleBar.vue"
 import { useNavbarStore } from "./stores/navbar";
 import {useScreenStore} from "@/stores/screen"
+import { useUserStore } from "./stores/user";
 </script>
 
 <template>
@@ -16,11 +17,11 @@ import {useScreenStore} from "@/stores/screen"
     />
   </head>
   <div class="fixed" :class="useNavbarStore().state ? 'pointer-events-none' : ''">
-    <Navbar :class="useNavbarStore().state ? 'animate__slideOutLeft pointer-events-none' : 'fixed animate__slideInLeft'" class="animate__animated animate__faster"/>
+    <Navbar :class="useNavbarStore().state ? 'hidden' : 'fixed'" class=""/>
   </div>
   <div class="flex flex-row min-w-0 w-full">
     <div class="flex min-w-0 w-full justify-center">
-      <div class="flex flex-col min-w-0 max-w-[768px] px-8 py-8 gap-8">
+      <div class="flex flex-col min-w-0 w-[768px] px-8 py-8 gap-8">
         <TitleBar/>
         <RouterView/>
       </div>

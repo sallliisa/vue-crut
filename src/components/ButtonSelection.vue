@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { defineProps, defineEmits } from 'vue';
+import { reactive } from 'vue';
 
 const props = defineProps({items: {type: Array<String>, default: [], required: true}})
 const emit = defineEmits(['updateValue'])
