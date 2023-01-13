@@ -22,7 +22,7 @@ const updateValue = (val: string) => {
             </button>
             <slot></slot>
             <input
-            class="focus:border-none focus:outline-none w-full text-sm bg-transparent"
+            class="focus:outline-none outline-none w-full text-sm bg-transparent"
             type="number"
             min="0"
             :value=value @input="(e) => updateValue((e.target as HTMLInputElement).value)"

@@ -19,7 +19,7 @@ const updateValue = (val: string) => {
                 <slot></slot>
             </div>
             <input
-            class="focus:border-none focus:outline-none w-full text-sm bg-transparent"
+            class="focus:outline-none outline-none w-full text-sm bg-transparent"
             :value=value @input="(e) => updateValue((e.target as HTMLInputElement).value)"
             :placeholder=props.placeholder
             >
