@@ -288,7 +288,7 @@ fetchUOMs()
             <Input :value="data.editedProduct.product_name" @update-value="data.editedProduct.product_name = $event" placeholder="Product Name"></Input>
             <div class="flex flex-row gap-4">
               <NumberInput class="md:w-[156px]" :value="(data.editedProduct.stock as any)" @update-value="data.editedProduct.stock = $event" placeholder="Stock"></NumberInput>
-              <Dropdown :value="data.editedProduct.uom_id-1" :items="data.uom" @active-item-change="data.editedProduct.uom_id = $event + 1"></Dropdown>
+              <Dropdown :value="data.uom.findIndex((ele: any) => ele.id == data.editedProduct.uom_id)" :items="data.uom.map((item) => (item as any).uom_name)" @active-item-change="data.editedProduct.uom_id = (data as any).uom[$event].id"></Dropdown>
             </div>
           </div>
           <Input :value="data.editedProduct.description" @update-value="data.editedProduct.description = $event" placeholder="Product Description"></Input>
@@ -317,7 +317,7 @@ fetchUOMs()
       </Card>
 
       <Card class="gap-8">
-        <Table v-if="computedData.length > 0" :columns="data.productData.columns" :data="computedData">
+        <Table v-if="computedData.length > 0" :paginated="true" :itemPerPage="tableViewSize" :currentPage="tablePage" :columns="data.productData.columns" :data="computedData">
           <template #item="item">
             <td class="py-4 w-36">{{ item.product_code }}</td>
             <td>

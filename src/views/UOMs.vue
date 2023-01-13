@@ -22,11 +22,12 @@ import IconEdit from "@/components/icons/IconEdit.vue";
 import IconLoading from "@/components/icons/IconLoading.vue";
 import { useScreenStore } from "@/stores/screen";
 import Alert from "@/components/Alert.vue"
+import IconChevronRight from "@/components/icons/IconChevronRight.vue";
+import IconChevronLeft from "@/components/icons/IconChevronLeft.vue";
+import IconChevronsRight from "@/components/icons/IconChevronsRight.vue";
+import IconChevronsLeft from "@/components/icons/IconChevronsLeft.vue";
 
 const query = ref('')
-const activeStockFilter = ref(0)
-const tablePage = ref(1)
-const tableViewSize = ref(10)
 const loading = ref(true)
 const errorMessage = ref('')
 
@@ -40,7 +41,11 @@ const cardState = reactive({
 const data = reactive({
   uomData: {
     columns: ['ID', 'UOM CODE', 'UOM NAME', 'ACTIONS'],
-    data: []
+    data: [],
+    totalLength: 0,
+    totalPages: 0,
+    currentPage: 1,
+    viewSize: 10,
   },
   UOM: {
     uom_code: '',
@@ -95,9 +100,12 @@ function toggleInputCard() {
 }
 
 const fetchUOMs = () => {
-  axios.get('/uoms').then(function (response) {
+  loading.value = true
+  axios.get(`/uoms?page=${data.uomData.currentPage}`).then(function (response) {
     errorMessage.value = ''
     data.uomData.data = response.data.data.map(({id, uom_code, uom_name}: any) => ({id, uom_code, uom_name}))
+    data.uomData.totalLength = response.data.total
+    data.uomData.totalPages = response.data.totalPage
     loading.value = false
   }).catch(function (error) {
     loading.value = false
@@ -170,6 +178,7 @@ fetchUOMs()
     <Stack>
       <Alert :sentiment="false" v-if="errorMessage != ''">{{ errorMessage }}</Alert>
       <Card class="gap-4">
+        {{ loading }}
         <Group v-if="useScreenStore().isAtLeast('md')" class="justify-between">
           <Group>
             <Input placeholder="Cari" @update-value="query = $event"><IconSearch class="fill-white"/></Input>
@@ -245,7 +254,8 @@ fetchUOMs()
       </Card>
 
       <Card class="gap-8">
-        <Table v-if="computedData.length > 0" :columns="data.uomData.columns" :data="computedData">
+        <div v-if="loading"><IconLoading/></div>
+        <Table v-else-if="computedData.length > 0" :columns="data.uomData.columns" :data="computedData">
           <template #item="item">
             <td class="py-4">{{ item.id }}</td>
             <td>{{ item.uom_code }}</td>
@@ -258,9 +268,30 @@ fetchUOMs()
             </td>
           </template>
         </Table>
-        <div v-else-if="!loading">Data tidak ditemukan</div>
-        <div v-else><IconLoading/></div>
-        <PageNavigation :data-length="data.uomData.data.length" @current-page-change="tablePage = $event" @view-size-dropdown-active-change="tableViewSize = $event"/>
+        <div v-else>Data tidak ditemukan</div>
+        <div class="flex flex-col md:flex-row md:justify-between items-center gap-4">
+          <div class="flex flex-row gap-2">
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == 1" @click="data.uomData.currentPage = 1; fetchUOMs()">
+                <IconChevronsLeft/>
+            </button>
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == 1" @click="data.uomData.currentPage--; fetchUOMs()">
+                <IconChevronLeft/>
+            </button>
+            <div class="border border-c-outline/75  rounded-md py-2 px-4">
+                {{data.uomData.currentPage}}
+            </div>
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == data.uomData.totalPages" @click="data.uomData.currentPage++; fetchUOMs()">
+                <IconChevronRight/>
+            </button>
+            <button class="fill-white disabled:fill-c-outline disabled:hover:border-c-outline/75 border border-c-outline/75 hover:border-c-outline/100 hover:bg-rbs-primary/20 rounded-md text-rbs-primary py-2 px-4 font-semibold" :disabled="data.uomData.currentPage == data.uomData.totalPages"  @click="data.uomData.currentPage = data.uomData.totalPages; fetchUOMs()">
+                <IconChevronsRight/>
+            </button>
+          </div>
+          <div class="flex flex-row gap-2 items-center justify-center">
+            <!-- <h1 class='text-rbs-grey'>Menampilkan {{ data.uomData > (viewSizeDropdownOptions[viewSizeDropdownActive] as number) ? viewSizeDropdownOptions[viewSizeDropdownActive] : dataLength }} dari {{ dataLength }} data</h1> -->
+            <!-- <Dropdown v-on:activeItemChange="viewSizeDropdownActiveChange($event)" :items=viewSizeDropdownOptions></Dropdown> -->
+          </div>
+        </div>
       </Card>
     </Stack>
   </main>

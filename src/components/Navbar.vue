@@ -22,7 +22,7 @@ const logoutText = ref(false)
                 <IconUserCircle class="fill-white"/>
                 <div class="flex flex-col items-start">
                     <div class="text-sm">{{ useUserStore().user.fullname }}</div>
-                    <div class="text-xs text-c-faded">{{ useUserStore().user.fullname }}</div>
+                    <div class="text-xs text-c-faded">{{ useUserStore().user.role_name }}</div>
                 </div>
             </button>
             <Button @click="useUserStore().logOut()" class="bg-red-500 hover:bg-red-800 w-full px-4 py-2 rounded-full" v-if="logoutText">Log out</Button>
