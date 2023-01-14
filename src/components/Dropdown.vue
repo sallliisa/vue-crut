@@ -29,7 +29,7 @@ const dropdownHandler: OnClickOutsideHandler = (event) => {
 
 const setActiveItem = (itemIdx: number) => {
     activeItem.value = itemIdx;
-    emit("activeItemChange", itemIdx);
+    emit("activeItemChange", props.items[itemIdx]);
 }
 </script>
 

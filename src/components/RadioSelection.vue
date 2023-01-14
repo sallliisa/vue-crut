@@ -2,7 +2,7 @@
 import IconRadio from './icons/IconRadio.vue';
 import { ref } from 'vue';
 import Group from './Group.vue';
-const props = defineProps({items: {type: Array, required: true}});
+const props = defineProps({items: {type: Array<String>, required: true}});
 const emit = defineEmits(['activeItemChange']);
 const activeItem = ref(0);
 const setActiveItem = (itemIdx: number) => {

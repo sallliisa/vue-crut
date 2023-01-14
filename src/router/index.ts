@@ -5,6 +5,7 @@ import axios from "axios";
 import {useUserStore} from "../stores/user";
 import Dashboard from "../views/Dashboard.vue"
 import UOMs from "../views/UOMs.vue"
+import Playground from "@/views/Playground.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,28 +30,12 @@ const router = createRouter({
       name: "Login",
       component: Login,
     },
+    {
+      path: "/playground",
+      name: "Playground",
+      component: Playground,
+    },
   ],
 });
-
-router.beforeEach(async (to, from, next) => {
-  if (to.name != 'Login') {
-    if (useUserStore().user.auth) {
-      const response = await axios.get('https://pos.zzidzz.tech/products')
-      if (response.status === 200) {
-        console.log('Logged in')
-        next()
-      }
-      else {
-        console.log('bounced back')
-        useUserStore().deleteUser()
-        next('/login')
-      }
-    } else {
-      next('/login')
-    }
-  } else {
-    next()
-  }
-})
 
 export default router;
