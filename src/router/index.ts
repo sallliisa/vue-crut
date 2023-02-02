@@ -6,6 +6,8 @@ import {useUserStore} from "../stores/user";
 import Dashboard from "../views/Dashboard.vue"
 import UOMs from "../views/UOMs.vue"
 import Playground from "@/views/Playground.vue";
+import PlaygroundOne from "@/views/PlaygroundOne.vue"
+import PlaygroundTwo from "@/views/PlaygroundTwo.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +36,18 @@ const router = createRouter({
       path: "/playground",
       name: "Playground",
       component: Playground,
+      children: [
+        {
+          path: "/playground/one",
+          name: "Playground - One",
+          component: PlaygroundOne,
+        },
+        {
+          path: "/playground/two",
+          name: "Playground - Two",
+          component: PlaygroundTwo
+        }
+      ]
     },
   ],
 });
